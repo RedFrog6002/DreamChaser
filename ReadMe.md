@@ -2,4 +2,4 @@
 
 A mod for the game Hollow Knight.
 
-Made with SFGrenade's Hollow KNight Mod template
+Made with SFGrenade's Hollow Knight Mod template
