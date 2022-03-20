@@ -1,0 +1,145 @@
+Phase 1:
+
+Passive:
+   Gorb passive
+   Markoth passive
+
+Special (keep random passive):
+   Markoth special
+
+
+Phase 2:
+
+Passive:
+   Gorb passive
+   Markoth passive
+
+Special (switch) (keep random passive):
+   Markoth special
+   Grimm pillars
+
+
+Phase 3:
+
+Passive (switch, 2 at once):
+   Gorb passive
+   Markoth passive
+   Grimm pillars
+
+Special (switch, 2 at once) (keep random passive):
+   Markoth special
+   Radiance 8
+   Radiance pillar
+
+
+
+
+
+
+Old:
+
+
+        public IEnumerator MovementAttacking()
+        {
+            StartDeceleratev2(0.9f);
+            yield return WaitForEvent("ATTACK END");
+            StopDeceleratev2();
+            MovementChooseTarget(); // split into before and after 
+            a
+        }
+
+        public IEnumerator MovementHover()
+        {
+            float x = transform.position.x;
+            float heroX = Target.transform.position.x;
+            if (x < heroX - 20 || x > heroX + 20)
+            {
+                FaceObject(gameObject, Target, false, true, "TurnToIdle", true, false, anim);
+                StartCoroutine(MovementWarpOut());
+                yield break;
+            }
+            else
+            {
+                int faceIndex = FaceObject(gameObject, Target, false, true, "TurnToIdle", true, true, anim);
+                int chaseIndex = ChaseObjectv2((rb2d, gameObject, 5f, 0.3f, 0f, 0f));
+                bool stop = false;
+                /*Coroutine listener = AddEventListener(() =>
+                {
+                    stop = true;
+                    StopChaseObjectv2(chaseIndex);
+                    StopFaceObject(faceIndex);
+                    switch (lastEvent)
+                    {
+                        case "TOOK DAMAGE":
+                            if (UnityEngine.Random.Range(0, 4) == 3)
+                            {
+                                yield return new WaitForSeconds(0.25f);
+                                MovementSetWarp();
+                            }
+                            else
+                                StartCoroutine(MovementHover());
+                            break;
+                        case "WARP":
+                            MovementSetWarp();
+                            break;
+                        case "RETURN":
+                            StartCoroutine(MovementWarpOut());
+                            break;
+                    }
+                }, "TOOK DAMAGE", "WARP", "RETURN");*/
+                yield return new WaitForSeconds(UnityEngine.Random.Range(4f, 5f));
+                if (!stop)
+                {
+                    StopChaseObjectv2(chaseIndex);
+                    StopFaceObject(faceIndex);
+                    //StopCoroutine(listener);
+                    MovementChooseTarget();
+                }
+            }
+        }
+
+        public IEnumerator MovementWarpOut()
+        {
+            WarpGO.SetActive(true);
+            WhiteFlash.SetActive(true);
+            BroadcastEventToGameObject(gameObject, new FsmEvent("ATTACK STOP"), false);
+            rb2d.velocity = Vector3.zero;
+            col2d.enabled = false;
+            mr.enabled = false;
+            yield return new WaitForSeconds(1f);
+            transform.position = new Vector3(56f, 41f, 0f);
+            WarpGO.SetActive(true);
+            WhiteFlash.SetActive(true);
+            BroadcastEventToGameObject(gameObject, new FsmEvent("ATTACK OK"), false);
+            col2d.enabled = true;
+            mr.enabled = true;
+            MovementChooseTarget();
+        }
+
+        public void MovementSetWarp()
+        {
+            bool left = transform.position.x < 56f;
+            bool heroLeft = Target.transform.position.x < 56f;
+            if (left != heroLeft)
+            {
+                StartCoroutine(MovementHover());
+                return;
+            }
+            else if (left)
+            {
+                WarpPos = UnityEngine.Random.Range(0, 2) == 0 ? P4 : P6;
+            }
+            else
+            {
+                WarpPos = UnityEngine.Random.Range(0, 2) == 0 ? P3 : P7;
+            }
+            WarpOutGO.SetActive(true);
+            Vector3 pos = transform.position;
+            transform.position = WarpPos;
+            WarpOutGO.transform.position = pos;
+            WarpGO.SetActive(true);
+            WhiteFlash.SetActive(true);
+            GameCameras.instance.cameraShakeFSM.SendEvent("EnemyKillShake");
+            AudioPlayerActor.Spawn(transform.position).GetComponent<AudioSource>().PlayOneShot(mage_knight_teleport);
+            StartCoroutine(MovementHover());
+        }
