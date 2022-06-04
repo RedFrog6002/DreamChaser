@@ -69,6 +69,12 @@ namespace DreamChaser
 
         private void FixedUpdate()
         {
+            Vector2 newPos = Position + (Velocity * Time.fixedUnscaledDeltaTime);
+            if (newPos != Position)
+            {
+                Position = newPos;
+                DreamChaser.server.netSender.BroadcastSingleData(ClientPacketType.BossPosition, new BossPosition() { pos = Position.ToH2() });
+            }
             int length = chaseV2s.Count;
             for (int i = 0; i < length; i++)
                 try { DoChaseForv2(chaseV2s[i]); } catch (Exception e) { Modding.Logger.Log(e); }
@@ -98,16 +104,6 @@ namespace DreamChaser
                 chaseIndex = -1;
             }
             StopDeceleratev2();
-        }
-
-        public void Update()
-        {
-            Vector2 newPos = Position + (Velocity * Time.unscaledDeltaTime);
-            if (newPos != Position)
-            {
-                Position = newPos;
-                DreamChaser.server.netSender.BroadcastSingleData(ClientPacketType.BossPosition, new BossPosition() {pos = Position.ToH2()});
-            }
         }
 
         public IEnumerator AttackCycle()

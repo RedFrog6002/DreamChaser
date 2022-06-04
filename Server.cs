@@ -34,36 +34,6 @@ namespace DreamChaser
 
             serverApi.ServerManager.PlayerEnterSceneEvent += ServerManager_PlayerEnterSceneEvent;
             serverApi.ServerManager.PlayerLeaveSceneEvent += ServerManager_PlayerLeaveSceneEvent;
-            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
-        }
-
-        private void SceneManager_activeSceneChanged(UnityEngine.SceneManagement.Scene arg0, UnityEngine.SceneManagement.Scene arg1)
-        {
-            DreamChaser.Instance.Log("Host player left scene " + arg0.name + " goinf to " + arg1.name);
-            if (arg1.name == arg0.name)
-                return;
-            if (bossStarted && ServerApi.ServerManager.TryGetPlayer(0, out IServerPlayer obj))
-            {
-                if (arg0.name == boss.Scene)
-                {
-                    DreamChaser.Instance.Log(obj.Username);
-
-                    boss.Targets.Remove(obj);
-
-                    if (!ServerApi.ServerManager.Players.Any(p => p.CurrentScene == boss.Scene))
-                    {
-                        boss.Scene = ServerApi.ServerManager.Players.ElementAt(UnityEngine.Random.Range(0, ServerApi.ServerManager.Players.Count)).CurrentScene;
-                        netSender.BroadcastSingleData(ClientPacketType.SummonBoss, new SummonBoss() { pos = boss.Position.ToH2(), Phase = boss.Phase, Scene = boss.Scene });
-                        boss.Targets.Clear();
-                        boss.Targets.AddRange(ServerApi.ServerManager.Players.Where(p => p.CurrentScene == boss.Scene));
-                        boss.Target = boss.Targets.GetRandom();
-                    }
-                    else if (boss.Target == obj)
-                        boss.Target = boss.Targets.GetRandom();
-                }
-                else if (arg1.name == boss.Scene)
-                    boss.Targets.Add(obj);
-            }
         }
 
         private void ServerManager_PlayerLeaveSceneEvent(IServerPlayer obj)
